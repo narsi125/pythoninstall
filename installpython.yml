@@ -1,0 +1,50 @@
+---
+- hosts: all
+
+  vars:
+
+   package_name: Python-3.8.0
+   download_url: "https://www.python.org/ftp/python/3.8.0/{{ package_name }}.tgz"
+   download_path: /opt/
+   download_src_dir: "{{ download_path }}/{{ package_name }}"
+   package_path: "{{ download_path }}/{{ package_name }}.tgz"
+
+  tasks:
+
+  - name: make sure necessary yum packages are installed
+    yum: name= {{ item }} state=present update_cache=yes
+    with_items:
+     - openssl
+     - openssl-devel
+
+  - name: install yum-utils
+    yum: name=yum-utils state=present update_cache=yes
+
+  - name: install gcc
+    yum: name=gcc state=present
+
+  - name: make sure necessary yum packages are installed
+    yum: name= {{ item }} state=present update_cache=yes
+    with_items:
+      - zlib
+      - zlib-devel
+
+  - name: download file  
+    get_url: url="{{ download_url }}" dest="{{ package_path }}" validate_certs=False
+
+  - name: Untar the source package
+    unarchive:
+     src: "{{ package_path }}"
+     dest: "{{ download_path }}"
+     creates: "{{ download_src_dir }}"
+
+  - name: Run configure
+    command: ./configure --enable-optimizations
+    args:
+     chdir: "{{ download_src_dir }}"
+
+  - name: Run make altinstall
+    command: make altinstall
+    args:
+      chdir: "{{ download_src_dir }}"
+
